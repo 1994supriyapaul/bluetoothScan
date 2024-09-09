@@ -1,0 +1,138 @@
+//
+//  AppDelegate.swift
+//  TestNotification2
+//
+//  Created by iPhoneDev1 on 25/08/23.
+//
+
+import UIKit
+import CoreData
+import UserNotifications
+
+@main
+class AppDelegate: UIResponder, UIApplicationDelegate,UNUserNotificationCenterDelegate {
+
+
+
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Override point for customization after application launch.
+        if #available(iOS 10, *) {
+ 
+             //Notifications get posted to the function (delegate):  func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: () -> Void)"
+             UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { (granted, error) in
+ 
+                 guard error == nil else {
+                     //Display Error.. Handle Error.. etc..
+                     return
+                 }
+ 
+                 if granted {
+                     //Do stuff here..
+ 
+                     //Register for RemoteNotifications. Your Remote Notifications can display alerts now :)
+                     DispatchQueue.main.async {
+                         application.registerForRemoteNotifications()
+                     }
+                 }
+                 else {
+                     //Handle user denying permissions..
+                 }
+             }
+ 
+             //Register for remote notifications.. If permission above is NOT granted, all notifications are delivered silently to AppDelegate.
+             application.registerForRemoteNotifications()
+         }
+         else {
+             let settings = UIUserNotificationSettings(types: [.alert, .badge, .sound], categories: nil)
+             application.registerUserNotificationSettings(settings)
+             application.registerForRemoteNotifications()
+         }
+ 
+        UNUserNotificationCenter.current().delegate = self
+        
+        return true
+    }
+
+    // This method will be called when app received push notifications in foreground
+    @available(iOS 10.0, *)
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void)
+    {
+        let userInfo = notification.request.content.userInfo
+             print(userInfo) // the payload that is attached to the push notification
+             // you can customize the notification presentation options. Below code will show notification banner as well as play a sound. If you want to add a badge too, add .badge in the array.
+        print("App running notification received")
+        completionHandler([.alert, .badge, .sound])
+    }
+    
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+ 
+             print("i am not available in simulator \(error)")
+     }
+     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+ 
+         let deviceTokenString = deviceToken.reduce("", {$0 + String(format: "%02X", $1)})
+         print(deviceTokenString)
+        // PersistentDataHandler.instance.setDeviceToken(withValue: deviceTokenString)
+     }
+    
+    // MARK: UISceneSession Lifecycle
+
+    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+        // Called when a new scene session is being created.
+        // Use this method to select a configuration to create the new scene with.
+        return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+    }
+
+    func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {
+        // Called when the user discards a scene session.
+        // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
+        // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
+    }
+
+    // MARK: - Core Data stack
+
+    lazy var persistentContainer: NSPersistentContainer = {
+        /*
+         The persistent container for the application. This implementation
+         creates and returns a container, having loaded the store for the
+         application to it. This property is optional since there are legitimate
+         error conditions that could cause the creation of the store to fail.
+        */
+        let container = NSPersistentContainer(name: "TestNotification2")
+        container.loadPersistentStores(completionHandler: { (storeDescription, error) in
+            if let error = error as NSError? {
+                // Replace this implementation with code to handle the error appropriately.
+                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+                 
+                /*
+                 Typical reasons for an error here include:
+                 * The parent directory does not exist, cannot be created, or disallows writing.
+                 * The persistent store is not accessible, due to permissions or data protection when the device is locked.
+                 * The device is out of space.
+                 * The store could not be migrated to the current model version.
+                 Check the error message to determine what the actual problem was.
+                 */
+                fatalError("Unresolved error \(error), \(error.userInfo)")
+            }
+        })
+        return container
+    }()
+
+    // MARK: - Core Data Saving support
+
+    func saveContext () {
+        let context = persistentContainer.viewContext
+        if context.hasChanges {
+            do {
+                try context.save()
+            } catch {
+                // Replace this implementation with code to handle the error appropriately.
+                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+                let nserror = error as NSError
+                fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
+            }
+        }
+    }
+
+}
+
